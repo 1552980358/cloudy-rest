@@ -15,3 +15,6 @@ strip = true
 
 [dependencies.rocket]
 version = "0.5.1"
+
+[dependencies.serde]
+version = "1.0.215"
