@@ -13,6 +13,9 @@ opt-level = 3
 overflow-checks = true
 strip = true
 
+[dependencies.regex]
+version = "1.11.1"
+
 [dependencies.rocket]
 version = "0.5.1"
 
