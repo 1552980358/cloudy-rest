@@ -3,8 +3,8 @@ use regex::Regex;
 
 pub fn filter_vars(regex: Regex) -> Vec<(String, String)> {
     env::vars()
-        .filter_map(|key, val| {
-            if regex.is_match(&*key) { Some((key, val)) }
+        .filter_map(|pair| {
+            if regex.is_match(&*pair.0) { Some(pair) }
             else { None }
         })
         .collect()
