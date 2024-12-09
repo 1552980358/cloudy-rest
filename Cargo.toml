@@ -12,3 +12,6 @@ lto = true
 opt-level = 3
 overflow-checks = true
 strip = true
+
+[dependencies.rocket]
+version = "0.5.1"
