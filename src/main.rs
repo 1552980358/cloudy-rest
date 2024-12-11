@@ -2,12 +2,14 @@
 
 mod ext;
 mod state;
-use state::{Config};
+use state::{Config, Database};
 
 #[launch]
 async fn rocket() -> _ {
     let config = Config::load();
+    let database = Database::from_config(&config);
 
     rocket::build()
         .manage(config)
+        .manage(database)
 }
