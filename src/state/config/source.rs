@@ -69,31 +69,31 @@ mod importer {
 
         #[test]
         fn test_from_file_line() {
-            let test_line = "       Test.Key =      TestValue      ".to_string();
+            let test_line = "       File-Line.Test.Key =      TestValue      ".to_string();
             let Some((key, val)) = from_file_line(&test_line) else {
                 panic!("Panic: Failed to extract key-value from file line.");
             };
-            assert_eq!(key, "test.key", "Key={}", key);
+            assert_eq!(key, "file-line.test.key", "Key={}", key);
             assert_eq!(val, "TestValue", "Value={}", val);
         }
 
         #[test]
         fn test_from_env_var() {
-            let test_key = "CLOUDY_TEST_KEY".to_string();
+            let test_key = "CLOUDY_ENV__VAR_TEST_KEY".to_string();
             let test_val = "TestValue".to_string();
             let Some((result_key, _)) = from_env_var(&(test_key.clone(), test_val.clone())) else {
                 panic!("Panic: Failed to extract key-value from env var.");
             };
-            assert_eq!(result_key, "test.key", "Result={}", result_key);
+            assert_eq!(result_key, "env-var.test.key", "Result={}", result_key);
         }
 
         #[test]
         fn test_from_console_arg() {
-            let test_arg = r#"-c" TEST.key =  TestValue ""#;
+            let test_arg = r#"-c" Console-Arg.Test.Key =  TestValue ""#;
             let Some((key, val)) = from_console_arg(&test_arg.to_string()) else {
                 panic!("Panic: Failed to extract key-value from console arg.");
             };
-            assert_eq!(key, "test.key", "Key={}", key);
+            assert_eq!(key, "console-arg.test.key", "Key={}", key);
             assert_eq!(val, "TestValue", "Value={}", val);
         }
 
