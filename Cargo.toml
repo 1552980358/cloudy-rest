@@ -13,6 +13,9 @@ opt-level = 3
 overflow-checks = true
 strip = true
 
+[dependencies.jsonwebtoken]
+version = "9.3.0"
+
 [dependencies.mongodb]
 version = "3.1.0"
 
@@ -23,4 +26,4 @@ version = "1.11.1"
 version = "0.5.1"
 
 [dependencies.serde]
-version = "1.0.215"
+version = "1.0.216"
