@@ -9,6 +9,7 @@ pub struct JsonWebToken {
     header: Header,
     encoding_key: EncodingKey,
     decoding_key: DecodingKey,
+    duration: i64,
 }
 
 impl JsonWebToken {
@@ -32,10 +33,13 @@ impl JsonWebToken {
             }
         };
 
+        let duration = metadata.duration;
+
         Self {
             header,
             encoding_key,
             decoding_key,
+            duration,
         }
     }
 
