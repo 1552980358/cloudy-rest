@@ -69,25 +69,26 @@ impl MetadataDetail {
  * Where [db_name] = "database.db.name"
  **/
 mod key {
+    use crate::str_vec;
 
     pub fn username() -> Vec<String> {
-        vec!["database".to_string(), "credential".to_string(), "usr".to_string()]
+        str_vec!["database", "credential", "usr"]
     }
 
     pub fn password() -> Vec<String> {
-        vec!["database".to_string(), "credential".to_string(), "pwd".to_string()]
+        str_vec!["database", "credential", "pwd"]
     }
 
     pub fn host() -> Vec<String> {
-        vec!["database".to_string(), "host".to_string(), "name".to_string()]
+        str_vec!["database", "host", "name"]
     }
 
     pub fn port() -> Vec<String> {
-        vec!["database".to_string(), "host".to_string(), "port".to_string()]
+        str_vec!["database", "host", "port"]
     }
 
     pub fn db_name() -> Vec<String> {
-        vec!["database".to_string(), "db".to_string(), "name".to_string()]
+        str_vec!["database", "db", "name"]
     }
 
 }
