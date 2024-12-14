@@ -91,7 +91,7 @@ mod key {
 trait MetadataConfig {
     fn algorithm(&self) -> Option<Algorithm>;
     fn key(&self) -> Key;
-    fn duration(&self) -> Option<i64>;
+    fn duration(&self) -> i64;
 }
 
 impl MetadataConfig for Config {
