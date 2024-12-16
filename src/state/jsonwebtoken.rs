@@ -1,4 +1,10 @@
 use jsonwebtoken::{DecodingKey, EncodingKey, Header};
+use jsonwebtoken::{
+    DecodingKey,
+    EncodingKey,
+    Header,
+    Validation
+};
 
 use crate::state::Config;
 
@@ -7,6 +13,7 @@ use metadata::{Metadata, Key};
 
 pub struct JsonWebToken {
     header: Header,
+    validation: Validation,
     encoding_key: EncodingKey,
     decoding_key: DecodingKey,
     duration: i64,
@@ -20,6 +27,9 @@ impl JsonWebToken {
         let header = metadata.algorithm
             .map(Header::new)
             .unwrap_or_else(Header::default);
+        let validation = metadata.algorithm
+            .map(Validation::new)
+            .unwrap_or_else(Validation::default);
 
         let (encoding_key, decoding_key) = match metadata.key {
             Key::Secret(secret) => {
@@ -37,6 +47,7 @@ impl JsonWebToken {
 
         Self {
             header,
+            validation,
             encoding_key,
             decoding_key,
             duration,
