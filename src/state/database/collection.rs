@@ -1,15 +1,5 @@
-use mongodb::Client;
+mod account;
+pub use account::Account;
 
-pub struct Collections {
-    /*TODO: To be implemented*/
-}
-
-impl Collections {
-
-    pub fn initialize(client: &Client) -> Self {
-        Self {
-            /*TODO: To be implemented*/
-        }
-    }
-
-}
+mod token;
+pub use token::Token;

@@ -5,8 +5,10 @@ mod connector;
 mod metadata;
 use metadata::Metadata;
 
-mod collection;
-use collection::Collections;
+pub mod collection;
+
+mod collections;
+use collections::Collections;
 
 pub struct Database {
     metadata: Metadata,
@@ -18,9 +20,13 @@ impl Database {
     pub fn from_config(config: &Config) -> Self {
         let metadata = Metadata::from_config(config);
         let client = connector::with_metadata(&metadata);
-        let collections = Collections::initialize(&client);
+        let database = client.database(metadata.db_name.as_str());
+        let collections = Collections::new(database);
 
-        Self { metadata, collections }
+        Self {
+            metadata,
+            collections,
+        }
     }
 
 }
