@@ -24,6 +24,7 @@ version = "1.11.1"
 
 [dependencies.rocket]
 version = "0.5.1"
+features = ["json"]
 
 [dependencies.serde]
 version = "1.0.216"
