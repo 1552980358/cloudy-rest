@@ -1,10 +1,10 @@
-use jsonwebtoken::{DecodingKey, EncodingKey, Header};
 use jsonwebtoken::{
     DecodingKey,
     EncodingKey,
     Header,
     Validation
 };
+use serde::{Deserialize, Serialize};
 
 use crate::state::Config;
 
@@ -17,6 +17,18 @@ pub struct JsonWebToken {
     encoding_key: EncodingKey,
     decoding_key: DecodingKey,
     duration: i64,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Claims {
+    #[serde(rename = "jti")]
+    pub id: String,
+    #[serde(rename = "sub")]
+    pub account: String,
+    #[serde(rename = "iat")]
+    pub issue: i64,
+    #[serde(rename = "exp")]
+    pub expiry: i64,
 }
 
 impl JsonWebToken {
@@ -51,6 +63,15 @@ impl JsonWebToken {
             encoding_key,
             decoding_key,
             duration,
+        }
+    }
+
+    pub fn new_claims(&self, token_id: &String, account_id: &String, issue_timestamp: &i64) -> Claims {
+        Claims {
+            id: token_id.clone(),
+            account: account_id.clone(),
+            issue: *issue_timestamp,
+            expiry: *issue_timestamp + self.duration,
         }
     }
 
