@@ -1,4 +1,5 @@
 use jsonwebtoken::{
+    errors::Error,
     DecodingKey,
     EncodingKey,
     Header,
@@ -73,6 +74,16 @@ impl JsonWebToken {
             issue: *issue_timestamp,
             expiry: *issue_timestamp + self.duration,
         }
+    }
+
+    pub fn encode_jwt(&self, claims: &Claims) -> Result<String, Error> {
+        jsonwebtoken::encode(&self.header, claims, &self.encoding_key)
+    }
+
+    pub fn decode_jwt(&self, jwt_str: &String) -> Result<Claims, Error> {
+        jsonwebtoken::decode::<Claims>(&*jwt_str, &self.decoding_key, &self.validation)
+            // Hide the header, expose the claims only
+            .map(|token_data| token_data.claims)
     }
 
 }
