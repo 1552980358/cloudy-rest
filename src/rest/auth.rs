@@ -1,9 +1,12 @@
 use rocket::Route;
 
+mod signature;
+
 pub const MOUNT_POINT: &str = "/auth";
 
 pub fn routes() -> Vec<Route> {
     routes![
-        /*TODO: To be implemented*/
+        // POST /auth/signature
+        signature::route,
     ]
 }
