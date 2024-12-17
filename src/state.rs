@@ -1,5 +1,8 @@
 use rocket::State;
 
+mod authorization;
+pub use authorization::Authorization;
+
 mod config;
 pub use config::Config;
 pub type ConfigState = State<Config>;

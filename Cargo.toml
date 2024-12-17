@@ -34,3 +34,6 @@ features = ["json"]
 
 [dependencies.serde]
 version = "1.0.216"
+
+[dependencies.tokio]
+version = "1.42.0"
