@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub struct Account {
     #[serde(rename = "_id")]
-    pub object_id: ObjectId,
+    pub id: ObjectId,
     pub username: String,
     pub public_keys: Vec<String>,
     // TODO: To be implemented
