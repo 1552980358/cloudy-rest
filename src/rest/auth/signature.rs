@@ -64,7 +64,7 @@ struct TokenFilter {
  * ```
  **/
 #[post("/signature", data = "<json_request_body>")]
-pub async fn route(
+pub async fn verification(
     config: &ConfigState,
     database: &DatabaseState,
     jsonwebtoken: &JsonWebTokenState,
@@ -151,16 +151,16 @@ pub async fn route(
 // 30 seconds
 const OID_TIMEOUT: i64 = 30 * 1000;
 
-trait LoginConfig {
+trait Signature {
     fn oid_timeout_millis(&self) -> i64;
 }
 
-impl LoginConfig for Config {
+impl Signature for Config {
     fn oid_timeout_millis(&self) -> i64 {
-        self.get(str_vec!["auth", "login", "oid", "timeout"])
+        self.get(str_vec!["auth", "signature", "oid-timeout"])
             .map(|timeout| timeout.parse::<i64>().ok())
             .flatten()
-            .unwrap_or_else(|| OID_TIMEOUT)
+            .unwrap_or(OID_TIMEOUT)
     }
 }
 
