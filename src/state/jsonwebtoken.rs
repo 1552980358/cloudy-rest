@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc, Duration};
 use jsonwebtoken::{
     errors::Error,
     DecodingKey,
@@ -17,7 +18,7 @@ pub struct JsonWebToken {
     validation: Validation,
     encoding_key: EncodingKey,
     decoding_key: DecodingKey,
-    duration: i64,
+    duration: Duration,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -56,7 +57,7 @@ impl JsonWebToken {
             }
         };
 
-        let duration = metadata.duration;
+        let duration = Duration::milliseconds(metadata.duration);
 
         Self {
             header,
@@ -67,12 +68,16 @@ impl JsonWebToken {
         }
     }
 
-    pub fn new_claims(&self, token_id: &String, account_id: &String, issue_timestamp: &i64) -> Claims {
+    pub fn expiry_from(&self, timestamp: &DateTime<Utc>) -> DateTime<Utc> {
+        *timestamp + self.duration
+    }
+
+    pub fn new_claims(&self, token_id: &String, account_id: &String, issue_timestamp: &DateTime<Utc>) -> Claims {
         Claims {
             id: token_id.clone(),
             account: account_id.clone(),
-            issue: *issue_timestamp,
-            expiry: *issue_timestamp + self.duration,
+            issue: issue_timestamp.timestamp(),
+            expiry: self.expiry_from(issue_timestamp).timestamp(),
         }
     }
 

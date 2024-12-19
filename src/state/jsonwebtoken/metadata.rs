@@ -29,8 +29,8 @@ impl Metadata {
     }
 }
 
-// Default duration is 7 days.
-const DEFAULT_DURATION: i64 = 7 * 24 * 60 * 60;
+// Default duration is 7 days (in milliseconds).
+const DEFAULT_DURATION: i64 = 7 * 24 * 60 * 60 * 1000;
 
 /**
  * JWT config keys in [Config].
@@ -52,8 +52,8 @@ const DEFAULT_DURATION: i64 = 7 * 24 * 60 * 60;
  * Symmetric key requires [key_secret].
  * Where [key_secret] = "jwt.key.secret"
  *
- * JWT duration is [duration].
- * Where [duration] = "jwt.duration": set as [DEFAULT_DURATION] (7 days) if not specified
+ * JWT duration is [duration], in millisecond (= second * 1000).
+ * Where [duration] = "jwt.duration": set as [super::DEFAULT_DURATION] (7 days) if not specified
  **/
 mod key {
     use crate::str_vec;

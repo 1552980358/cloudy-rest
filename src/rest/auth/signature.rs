@@ -1,4 +1,5 @@
-use mongodb::bson::{doc, oid::ObjectId, to_document, DateTime};
+use chrono::{DateTime, Duration, Utc};
+use mongodb::bson::{doc, oid::ObjectId, to_document};
 use openssl::{
     base64,
     rsa::{Padding, Rsa},
@@ -74,8 +75,9 @@ pub async fn verification(
 
     let object_id = ObjectId::parse_str(&signature_request.oid).map_err(|_| Status::BadRequest)?;
 
-    let object_id_timestamp = object_id.timestamp().timestamp_millis();
-    if verify_object_id_expiry(config, &object_id_timestamp) {
+    let object_id_issue_timestamp = DateTime::from_timestamp_millis(object_id.timestamp().timestamp_millis())
+        .ok_or(Status::InternalServerError)?;
+    if is_object_id_expired(config, &object_id_issue_timestamp) {
         return Err(Status::BadRequest);
     }
 
@@ -120,15 +122,13 @@ pub async fn verification(
     }
 
     let claims = jsonwebtoken.new_claims(
-        &object_id.to_hex(),
-        &account.object_id.to_hex(),
-        &(object_id_timestamp / 1_000),
+        &object_id.to_hex(), &account.id.to_hex(), &object_id_issue_timestamp,
     );
     let jwt_str = jsonwebtoken
         .encode_jwt(&claims)
         .map_err(|_| Status::InternalServerError)?;
 
-    let token = Token::new(object_id, account.object_id, claims.expiry);
+    let token = Token::new(object_id, account.id, claims.expiry);
     let inserted_object_id = database
         .collections
         .token
@@ -164,12 +164,13 @@ impl Signature for Config {
     }
 }
 
-fn verify_object_id_expiry(config: &Config, object_id_timestamp: &i64) -> bool {
-    let now_timestamp = DateTime::now().timestamp_millis();
+fn is_object_id_expired(config: &Config, object_id_issue: &DateTime<Utc>) -> bool {
+    let now_timestamp = Utc::now();
     let valid_duration = config.oid_timeout_millis();
 
     // object_id is from the future or too old || object_id expired
-    *object_id_timestamp > now_timestamp || (now_timestamp - *object_id_timestamp) > valid_duration
+    *object_id_issue > now_timestamp ||
+        (*object_id_issue + Duration::milliseconds(valid_duration) < now_timestamp)
 }
 
 fn verify_rsa_public_key_pem(
