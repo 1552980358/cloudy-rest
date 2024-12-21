@@ -27,6 +27,8 @@ pub struct Claims {
     pub id: String,
     #[serde(rename = "sub")]
     pub account: String,
+    #[serde(rename = "pub")]
+    pub public_key: String,
     #[serde(rename = "iat")]
     pub issue: i64,
     #[serde(rename = "exp")]
@@ -72,10 +74,17 @@ impl JsonWebToken {
         *timestamp + self.duration
     }
 
-    pub fn new_claims(&self, token_id: &String, account_id: &String, issue_timestamp: &DateTime<Utc>) -> Claims {
+    pub fn new_claims(
+        &self,
+        token_id: &String,
+        account_id: &String,
+        public_key_id: &String,
+        issue_timestamp: &DateTime<Utc>
+    ) -> Claims {
         Claims {
             id: token_id.clone(),
             account: account_id.clone(),
+            public_key: public_key_id.clone(),
             issue: issue_timestamp.timestamp(),
             expiry: self.expiry_from(issue_timestamp).timestamp(),
         }

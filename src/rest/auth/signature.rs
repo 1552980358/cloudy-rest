@@ -101,21 +101,14 @@ pub async fn verification(
     let signature = base64::decode_block(signature_request.sig.as_ref())
         .map_err(|_| Status::BadRequest)?;
 
-    let _validate_account_public_key = account
-        .public_keys
-        .iter()
+    let public_key = account.public_keys.iter()
         .find(|public_key| {
-            verify_rsa_public_key_pem(public_key, &signature, &signature_request.oid).unwrap_or(false)
+            verify_rsa_public_key(&public_key.key, &signature, &signature_request.oid)
+                .unwrap_or(false)
         })
         // If no public key is found, return unauthorized
-        .ok_or_else(|| Status::Unauthorized)?;
+        .ok_or(Status::Unauthorized)?;
 
-    let token_filter = TokenFilter { object_id };
-    let filter_document = to_document(&token_filter).map_err(|_| Status::InternalServerError)?;
-    if database
-        .collections
-        .token
-        .find_one(filter_document)
     let token_filter = TokenFilter { id: object_id };
     let token_filter = bson::to_document(&token_filter)
         .map_err(|_| Status::InternalServerError)?;
@@ -128,16 +121,14 @@ pub async fn verification(
     }
 
     let claims = jsonwebtoken.new_claims(
-        &object_id.to_hex(), &account.id.to_hex(), &object_id_timestamp,
+        &object_id.to_hex(), &account.id.to_hex(), &public_key.id.to_hex(), &object_id_timestamp,
     );
     let jwt_str = jsonwebtoken
         .encode_jwt(&claims)
         .map_err(|_| Status::InternalServerError)?;
 
-    let token = Token::new(object_id, account.id, claims.expiry);
-    let inserted_object_id = database
-        .collections
-        .token
+    let token = Token::new(object_id, account.id, public_key.id, claims.expiry);
+    let inserted_object_id = database.collections.token
         .insert_one(token)
         .await
         // Handle driver error
@@ -179,7 +170,7 @@ fn is_object_id_expired(config: &Config, object_id_timestamp: &DateTime<Utc>) ->
         (*object_id_timestamp + Duration::milliseconds(valid_duration) < now_timestamp)
 }
 
-fn verify_rsa_public_key_pem(
+fn verify_rsa_public_key(
     public_key: &String,
     signature: &Vec<u8>,
     object_id_hex: &String,
@@ -196,7 +187,7 @@ fn verify_rsa_public_key_pem(
 
 #[cfg(test)]
 mod test {
-    use super::verify_rsa_public_key_pem;
+    use super::verify_rsa_public_key;
     use openssl::base64;
 
     // noinspection SpellCheckingInspection
@@ -237,7 +228,7 @@ mod test {
                 ";
         let signature_bytes = base64::decode_block(signature).unwrap();
 
-        verify_rsa_public_key_pem(&public_key, &signature_bytes, &object_id_hex)
+        verify_rsa_public_key(&public_key, &signature_bytes, &object_id_hex)
             .map(|is_valid| assert!(is_valid))
             .unwrap_or_else(|_| panic!("Invalid RSA public key verification"));
     }
