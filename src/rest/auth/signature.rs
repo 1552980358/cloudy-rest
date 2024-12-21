@@ -1,5 +1,8 @@
 use chrono::{DateTime, Duration, Utc};
-use mongodb::bson::{doc, oid::ObjectId, to_document};
+use mongodb::{
+    bson,
+    bson::{doc, oid::ObjectId}
+};
 use openssl::{
     base64,
     rsa::{Padding, Rsa},
@@ -32,8 +35,8 @@ struct AccountFilter {
 
 #[derive(Debug, Serialize)]
 struct TokenFilter {
-    #[serde(rename = "account")]
-    object_id: ObjectId,
+    #[serde(rename = "_id")]
+    id: ObjectId,
 }
 
 /**
@@ -73,30 +76,30 @@ pub async fn verification(
 ) -> Result<String, Status> {
     let signature_request = json_request_body.into_inner();
 
-    let object_id = ObjectId::parse_str(&signature_request.oid).map_err(|_| Status::BadRequest)?;
+    let object_id = ObjectId::parse_str(&signature_request.oid)
+        .map_err(|_| Status::BadRequest)?;
 
-    let object_id_issue_timestamp = DateTime::from_timestamp_millis(object_id.timestamp().timestamp_millis())
+    let object_id_timestamp = DateTime::from_timestamp_millis(object_id.timestamp().timestamp_millis())
         .ok_or(Status::InternalServerError)?;
-    if is_object_id_expired(config, &object_id_issue_timestamp) {
+    if is_object_id_expired(config, &object_id_timestamp) {
         return Err(Status::BadRequest);
     }
 
     let account_filter = AccountFilter {
         username: signature_request.usr,
     };
-    let filter_document = to_document(&account_filter).map_err(|_| Status::InternalServerError)?;
-    let account = database
-        .collections
-        .account
+    let filter_document = bson::to_document(&account_filter)
+        .map_err(|_| Status::InternalServerError)?;
+    let account = database.collections.account
         .find_one(filter_document)
         .await
         // Handle collection filtering / connection error
         .map_err(|_| Status::InternalServerError)?
         // Handle account not found
-        .ok_or_else(|| Status::NotFound)?;
+        .ok_or(Status::NotFound)?;
 
-    let signature =
-        base64::decode_block(signature_request.sig.as_ref()).map_err(|_| Status::BadRequest)?;
+    let signature = base64::decode_block(signature_request.sig.as_ref())
+        .map_err(|_| Status::BadRequest)?;
 
     let _validate_account_public_key = account
         .public_keys
@@ -113,16 +116,19 @@ pub async fn verification(
         .collections
         .token
         .find_one(filter_document)
+    let token_filter = TokenFilter { id: object_id };
+    let token_filter = bson::to_document(&token_filter)
+        .map_err(|_| Status::InternalServerError)?;
+    if database.collections.token.find_one(token_filter)
         .await
         .map_err(|_| Status::InternalServerError)?
         // Make sure the token id is unique
-        .is_some()
-    {
+        .is_some() {
         return Err(Status::Conflict);
     }
 
     let claims = jsonwebtoken.new_claims(
-        &object_id.to_hex(), &account.id.to_hex(), &object_id_issue_timestamp,
+        &object_id.to_hex(), &account.id.to_hex(), &object_id_timestamp,
     );
     let jwt_str = jsonwebtoken
         .encode_jwt(&claims)
@@ -139,7 +145,7 @@ pub async fn verification(
         .inserted_id
         .as_object_id()
         // Handle object id conversion error
-        .ok_or_else(|| Status::InternalServerError)?;
+        .ok_or(Status::InternalServerError)?;
     // Make sure the inserted object id is the same as the object id
     if inserted_object_id.to_hex() != object_id.to_hex() {
         return Err(Status::InternalServerError);
@@ -164,13 +170,13 @@ impl Signature for Config {
     }
 }
 
-fn is_object_id_expired(config: &Config, object_id_issue: &DateTime<Utc>) -> bool {
+fn is_object_id_expired(config: &Config, object_id_timestamp: &DateTime<Utc>) -> bool {
     let now_timestamp = Utc::now();
     let valid_duration = config.oid_timeout_millis();
 
     // object_id is from the future or too old || object_id expired
-    *object_id_issue > now_timestamp ||
-        (*object_id_issue + Duration::milliseconds(valid_duration) < now_timestamp)
+    *object_id_timestamp > now_timestamp ||
+        (*object_id_timestamp + Duration::milliseconds(valid_duration) < now_timestamp)
 }
 
 fn verify_rsa_public_key_pem(
