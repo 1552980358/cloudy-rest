@@ -45,7 +45,7 @@ struct TokenFilter {
 /**
  * Request:
  * ```text
- * POST /auth/signature HTTP/<HTTP-Version>
+ * POST /auth/sig HTTP/<HTTP-Version>
  * Content-Type: application/json
  * Content-Length: <Length-of-Body>
  *
@@ -70,7 +70,7 @@ struct TokenFilter {
  * HTTP/<HTTP-Version> <Error-Status-Code> <Error-Status-Message>
  * ```
  **/
-#[post("/signature", data = "<json_request_body>")]
+#[post("/sig", data = "<json_request_body>")]
 pub async fn verification(
     config: &ConfigState,
     database: &DatabaseState,
