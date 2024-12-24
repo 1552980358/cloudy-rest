@@ -12,7 +12,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     state::{
-        database::collection::Token,
+        database::collection::{
+            account::public_key::Validity,
+            Token
+        },
         Config,
         ConfigState,
         DatabaseState,
@@ -75,13 +78,14 @@ pub async fn verification(
     json_request_body: Json<SignatureRequest>,
 ) -> Result<String, Status> {
     let signature_request = json_request_body.into_inner();
+    let now_timestamp = Utc::now();
 
     let object_id = ObjectId::parse_str(&signature_request.oid)
         .map_err(|_| Status::BadRequest)?;
 
     let object_id_timestamp = DateTime::from_timestamp_millis(object_id.timestamp().timestamp_millis())
         .ok_or(Status::InternalServerError)?;
-    if is_object_id_expired(config, &object_id_timestamp) {
+    if is_object_id_expired(config, &now_timestamp, &object_id_timestamp) {
         return Err(Status::BadRequest);
     }
 
@@ -98,12 +102,19 @@ pub async fn verification(
         // Handle account not found
         .ok_or(Status::NotFound)?;
 
+    let now_timestamp = now_timestamp.timestamp_millis();
+
     let signature = base64::decode_block(signature_request.sig.as_ref())
         .map_err(|_| Status::BadRequest)?;
 
     let public_key = account.public_keys.iter()
         .find(|public_key| {
-            verify_rsa_public_key(&public_key.key, &signature, &signature_request.oid)
+            let is_expired = match public_key.validity {
+                Validity::Master | Validity::Permanent => true,
+                Validity::Temporary(expiry_timestamp) => { now_timestamp < expiry_timestamp }
+                Validity::Disabled(_) => { false }
+            };
+            is_expired && verify_rsa_public_key(&public_key.key, &signature, &signature_request.oid)
                 .unwrap_or(false)
         })
         // If no public key is found, return unauthorized
@@ -161,13 +172,16 @@ impl Signature for Config {
     }
 }
 
-fn is_object_id_expired(config: &Config, object_id_timestamp: &DateTime<Utc>) -> bool {
-    let now_timestamp = Utc::now();
+fn is_object_id_expired(
+    config: &Config,
+    now_timestamp: &DateTime<Utc>,
+    object_id_timestamp: &DateTime<Utc>
+) -> bool {
     let valid_duration = config.oid_timeout_millis();
 
     // object_id is from the future or too old || object_id expired
-    *object_id_timestamp > now_timestamp ||
-        (*object_id_timestamp + Duration::milliseconds(valid_duration) < now_timestamp)
+    *object_id_timestamp > *now_timestamp ||
+        (*object_id_timestamp + Duration::milliseconds(valid_duration) < *now_timestamp)
 }
 
 fn verify_rsa_public_key(
