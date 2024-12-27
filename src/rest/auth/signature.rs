@@ -71,7 +71,7 @@ struct TokenFilter {
  * ```
  **/
 #[post("/sig", data = "<json_request_body>")]
-pub async fn verification(
+pub async fn verify(
     config: &ConfigState,
     database: &DatabaseState,
     jsonwebtoken: &JsonWebTokenState,
