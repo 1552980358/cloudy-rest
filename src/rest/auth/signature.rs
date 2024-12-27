@@ -138,7 +138,7 @@ pub async fn verification(
         .encode_jwt(&claims)
         .map_err(|_| Status::InternalServerError)?;
 
-    let token = Token::new(object_id, account.id, public_key.id, claims.expiry);
+    let token = Token::of_signature(object_id, account.id, public_key.id, claims.expiry);
     let inserted_object_id = database.collections.token
         .insert_one(token)
         .await
