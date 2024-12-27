@@ -132,7 +132,7 @@ pub async fn verification(
     }
 
     let claims = jsonwebtoken.new_claims(
-        &object_id.to_hex(), &account.id.to_hex(), &public_key.id.to_hex(), &object_id_timestamp,
+        &object_id.to_hex(), &account.id.to_hex(), &object_id_timestamp,
     );
     let jwt_str = jsonwebtoken
         .encode_jwt(&claims)
