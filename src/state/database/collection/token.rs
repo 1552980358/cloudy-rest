@@ -56,4 +56,13 @@ impl Token {
         )
     }
 
+    pub fn of_passkey(id: ObjectId, account: ObjectId, expiry: i64) -> Self {
+        Self::new(
+            id,
+            account,
+            expiry,
+            Issuer::OnetimePassword,
+        )
+    }
+
 }

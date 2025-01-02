@@ -3,5 +3,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub enum Issuer {
+    OnetimePassword,
     PublicKey(ObjectId),
 }
